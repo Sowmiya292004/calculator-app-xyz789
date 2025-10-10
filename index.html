@@ -135,22 +135,24 @@
         <div id="display" class="display">0</div>
         <div class="buttons">
             <button class="clear" data-action="clear">C</button>
+            <button class="operator" data-action="sqrt">√</button>
+            <button class="operator" data-action="percent">%</button>
             <button class="operator" data-action="divide">/</button>
-            <button class="operator" data-action="multiply">*</button>
             <button class="number">7</button>
             <button class="number">8</button>
             <button class="number">9</button>
-            <button class="operator" data-action="subtract">-</button>
+            <button class="operator" data-action="multiply">*</button>
             <button class="number">4</button>
             <button class="number">5</button>
             <button class="number">6</button>
-            <button class="operator" data-action="add">+</button>
+            <button class="operator" data-action="subtract">-</button>
             <button class="number">1</button>
             <button class="number">2</button>
             <button class="number">3</button>
-            <button class="equals" data-action="calculate">=</button>
+            <button class="operator" data-action="add">+</button>
             <button class="number zero">0</button>
             <button class="decimal" data-action="decimal">.</button>
+            <button class="equals" data-action="calculate">=</button>
         </div>
     </div>
     <script>
@@ -245,6 +247,35 @@
             return 'Error';
         }
 
+        function handleSqrt() {
+            if (displayValue === 'Error') {
+                resetCalculator();
+                return;
+            }
+            const value = parseFloat(displayValue);
+            if (value < 0) {
+                displayValue = 'Error';
+            } else {
+                displayValue = String(Math.sqrt(value));
+            }
+            // Unary operation, resets chain for subsequent operations unless explicitly chained
+            firstOperand = null; 
+            operator = null;
+            waitingForSecondOperand = false;
+            updateDisplay();
+        }
+
+        function handlePercent() {
+            if (displayValue === 'Error') {
+                resetCalculator();
+                return;
+            }
+            const value = parseFloat(displayValue);
+            displayValue = String(value / 100);
+            // Percentage modifies the current operand. The calculation chain remains.
+            updateDisplay();
+        }
+
         function resetCalculator() {
             displayValue = '0';
             firstOperand = null;
@@ -272,7 +303,13 @@
             }
 
             if (target.classList.contains('operator')) {
-                handleOperator(action);
+                if (action === 'sqrt') {
+                    handleSqrt();
+                } else if (action === 'percent') {
+                    handlePercent();
+                } else {
+                    handleOperator(action);
+                }
                 return;
             }
 
