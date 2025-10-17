@@ -95,53 +95,46 @@
         }
 
         /* Grid specific styling for buttons */
-        #clear-button {
-            grid-column: span 1;
-        }
         .wide {
             grid-column: span 2;
-        }
-        .tall {
-            grid-row: span 2;
         }
 
         /* Rounding specific buttons for overall calculator shape */
         #calculator-buttons button:nth-child(1) { border-top-left-radius: 0; } /* C button */
-        #calculator-buttons button:nth-child(4) { border-top-right-radius: 0; } /* - button */
-        #calculator-buttons button:nth-child(19) { border-bottom-left-radius: 15px; } /* 0 button */
-        #calculator-buttons button:nth-child(20) { border-bottom-right-radius: 15px; } /* . button */
-        #calculator-buttons button:nth-child(8) { border-top-right-radius: 0; } /* + button top */
-        #calculator-buttons button:nth-child(16) { border-bottom-right-radius: 15px; } /* = button bottom */
+        #calculator-buttons button:nth-child(4) { border-top-right-radius: 0; } /* / button */
+        #calculator-buttons button:nth-child(17) { border-bottom-left-radius: 15px; } /* 0 button */
+        #calculator-buttons button:nth-child(19) { border-bottom-right-radius: 15px; } /* = button */
 
-        /* Re-adjusting specific button positions for a standard layout */
-        /* C, /, *, - */
-        /* 7, 8, 9, + */
-        /* 4, 5, 6, + */
-        /* 1, 2, 3, = */
+        /* Re-adjusting specific button positions for new layout */
+        /* C, √, %, / */
+        /* 7, 8, 9, * */
+        /* 4, 5, 6, - */
+        /* 1, 2, 3, + */
         /* 0, ., = */
 
         #clear-button { grid-column: 1; grid-row: 1; }
-        .operator[data-operator="/"] { grid-column: 2; grid-row: 1; }
-        .operator[data-operator="*"] { grid-column: 3; grid-row: 1; }
-        .operator[data-operator="-"] { grid-column: 4; grid-row: 1; }
+        .operator[data-operator="sqrt"] { grid-column: 2; grid-row: 1; }
+        .operator[data-operator="%"] { grid-column: 3; grid-row: 1; }
+        .operator[data-operator="/"] { grid-column: 4; grid-row: 1; }
 
         .number:nth-child(5) { grid-column: 1; grid-row: 2; } /* 7 */
         .number:nth-child(6) { grid-column: 2; grid-row: 2; } /* 8 */
         .number:nth-child(7) { grid-column: 3; grid-row: 2; } /* 9 */
-        .operator[data-operator="+"] { grid-column: 4; grid-row: 2 / span 2; } /* + spans 2 rows */
+        .operator[data-operator="*"] { grid-column: 4; grid-row: 2; }
 
         .number:nth-child(9) { grid-column: 1; grid-row: 3; } /* 4 */
         .number:nth-child(10) { grid-column: 2; grid-row: 3; } /* 5 */
         .number:nth-child(11) { grid-column: 3; grid-row: 3; } /* 6 */
+        .operator[data-operator="-"] { grid-column: 4; grid-row: 3; }
 
         .number:nth-child(13) { grid-column: 1; grid-row: 4; } /* 1 */
         .number:nth-child(14) { grid-column: 2; grid-row: 4; } /* 2 */
         .number:nth-child(15) { grid-column: 3; grid-row: 4; } /* 3 */
-        #equals-button { grid-column: 4; grid-row: 4 / span 2; } /* = spans 2 rows */
+        .operator[data-operator="+"] { grid-column: 4; grid-row: 4; }
 
         .number:nth-child(17) { grid-column: 1 / span 2; grid-row: 5; } /* 0 spans 2 columns */
         .number.decimal { grid-column: 3; grid-row: 5; } /* . */
-
+        #equals-button { grid-column: 4; grid-row: 5; }
     </style>
 </head>
 <body>
@@ -149,26 +142,28 @@
         <div id="calculator-display">0</div>
         <div id="calculator-buttons">
             <button class="clear" id="clear-button">C</button>
+            <button class="operator" data-operator="sqrt">√</button>
+            <button class="operator" data-operator="%">%</button>
             <button class="operator" data-operator="/">/</button>
-            <button class="operator" data-operator="*">*</button>
-            <button class="operator" data-operator="-">-</button>
 
             <button class="number">7</button>
             <button class="number">8</button>
             <button class="number">9</button>
-            <button class="operator tall" data-operator="+">+</button>
+            <button class="operator" data-operator="*">*</button>
 
             <button class="number">4</button>
             <button class="number">5</button>
             <button class="number">6</button>
+            <button class="operator" data-operator="-">-</button>
 
             <button class="number">1</button>
             <button class="number">2</button>
             <button class="number">3</button>
-            <button class="equals tall" id="equals-button">=</button>
+            <button class="operator" data-operator="+">+</button>
 
             <button class="number wide">0</button>
             <button class="number decimal">.</button>
+            <button class="equals" id="equals-button">=</button>
         </div>
     </div>
 
@@ -240,7 +235,14 @@
             const prev = parseFloat(previousInput);
             const current = parseFloat(currentInput);
 
-            if (isNaN(prev) || isNaN(current)) return;
+            if (isNaN(prev) || isNaN(current)) {
+                currentInput = 'Error';
+                operator = null;
+                previousInput = '';
+                waitingForSecondOperand = false;
+                updateDisplay();
+                return;
+            }
 
             switch (operator) {
                 case '+':
@@ -275,6 +277,53 @@
             updateDisplay();
         }
 
+        function handleSquareRoot() {
+            if (currentInput === 'Error') {
+                clear();
+                return;
+            }
+            let num = parseFloat(currentInput);
+            if (isNaN(num) || num < 0) {
+                currentInput = 'Error';
+            } else {
+                currentInput = parseFloat(Math.sqrt(num).toFixed(10)).toString();
+            }
+            operator = null; // Unary operation resets operator
+            previousInput = ''; // Unary operation resets previous input
+            waitingForSecondOperand = true; // Ready for new input or chain operation
+            updateDisplay();
+        }
+
+        function handlePercentage() {
+            if (currentInput === 'Error') {
+                clear();
+                return;
+            }
+            let current = parseFloat(currentInput);
+            if (isNaN(current)) return;
+
+            if (operator && previousInput !== '') {
+                // If an operator and previous number exist (e.g., 100 + 10%)
+                let prev = parseFloat(previousInput);
+                if (isNaN(prev)) { 
+                    currentInput = 'Error';
+                    updateDisplay();
+                    return;
+                }
+                let percentageValue = (prev * current) / 100;
+                currentInput = percentageValue.toString();
+                // Then, trigger calculation to apply the operator with the new currentInput
+                calculate();
+            } else {
+                // No operator, just convert current input to percentage (e.g., 50% -> 0.5)
+                currentInput = (current / 100).toString();
+                operator = null; // Unary-like operation resets operator
+                previousInput = ''; // Unary-like operation resets previous input
+                waitingForSecondOperand = true; // Ready for new input or chain operation
+                updateDisplay();
+            }
+        }
+
         // Event Listeners for button clicks
         document.addEventListener('DOMContentLoaded', () => {
             const buttonsContainer = document.getElementById('calculator-buttons');
@@ -286,7 +335,14 @@
                 if (target.classList.contains('number')) {
                     appendNumber(target.textContent);
                 } else if (target.classList.contains('operator')) {
-                    chooseOperation(target.dataset.operator);
+                    const op = target.dataset.operator;
+                    if (op === 'sqrt') {
+                        handleSquareRoot();
+                    } else if (op === '%') {
+                        handlePercentage();
+                    } else {
+                        chooseOperation(op);
+                    }
                 } else if (target.classList.contains('equals')) {
                     calculate();
                 } else if (target.classList.contains('clear')) {
